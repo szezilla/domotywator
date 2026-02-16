@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Hasła - DOMotywator</title>
+    <link rel="stylesheet" href="style.css?v=20260213">
+</head>
+<body>
+    <div class="container" style="justify-content: center; min-height: auto;">
+        <div class="lang-switch" aria-label="Language switcher">
+            <button type="button" class="lang-btn" data-lang="pl" data-i18n="common.lang_pl">PL</button>
+            <button type="button" class="lang-btn" data-lang="en" data-i18n="common.lang_en">EN</button>
+        </div>
+        <div class="header-bar" style="justify-content: center;">
+            <h1 style="color:#667eea;" data-i18n="reset.title">🔐 Reset Hasła</h1>
+        </div>
+
+        <form id="reset-password-form" style="margin-top: 0;">
+            <div id="reset-message" class="center-text" style="font-weight: bold; min-height: 20px;"></div>
+            <p class="center-text" style="color: #666; margin-bottom: 20px;" data-i18n="reset.description">Wpisz nowe hasło dla swojego konta.</p>
+            
+            <input type="password" id="reset-new-pass" placeholder="Nowe hasło" data-i18n-placeholder="reset.new_password_placeholder" required minlength="5">
+            <input type="password" id="reset-new-pass-confirm" placeholder="Potwierdź hasło" data-i18n-placeholder="reset.confirm_password_placeholder" required minlength="5">
+            
+            <button type="submit" data-i18n="reset.submit_button">Zmień hasło</button>
+        </form>
+
+        <div class="center-text mt-20">
+            <a href="/" style="color: #667eea; text-decoration: none;" data-i18n="reset.back_to_login">Wróć do logowania</a>
+        </div>
+    </div>
+
+    <script>
+        (function syncLangFromUrl() {
+            const lang = new URLSearchParams(window.location.search).get('lang');
+            if (lang === 'pl' || lang === 'en') {
+                localStorage.setItem('lang', lang);
+                document.documentElement.lang = lang;
+            }
+        })();
+    </script>
+    <script src="js/i18n.js"></script>
+    <script>
+        const t = (key, fallback) => (window.i18n ? window.i18n.t(key) : fallback);
+        const apiMessage = (data, fallback) => {
+            if (window.i18n && data && typeof data.messageKey === 'string') {
+                return window.i18n.t(data.messageKey);
+            }
+            return data && data.wiadomosc ? data.wiadomosc : fallback;
+        };
+
+        document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const p1 = document.getElementById('reset-new-pass').value;
+            const p2 = document.getElementById('reset-new-pass-confirm').value;
+            const msgDiv = document.getElementById('reset-message');
+            const btn = e.target.querySelector('button');
+
+            // 1. Walidacja
+            if (p1 !== p2) {
+                msgDiv.innerHTML = `<div class="alert-red">${t('reset.passwords_mismatch', 'Hasła nie są identyczne!')}</div>`;
+                setTimeout(() => { msgDiv.innerHTML = ''; }, 2500);
+                return;
+            }
+
+            // 2. Pobranie tokena z URL (?token=XYZ)
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (!token) {
+                msgDiv.innerHTML = `<div class="alert-red">${t('reset.missing_token', 'Błąd: Brak tokena resetującego w linku.')}</div>`;
+                return;
+            }
+
+            // 3. Wysyłka do API
+            btn.disabled = true;
+            btn.textContent = t('reset.submit_loading', 'Zmienianie...');
+
+            try {
+                const res = await fetch('/api/auth/zmien-haslo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, noweHaslo: p1 })
+                });
+                const data = await res.json();
+
+                if (data.sukces) {
+                    msgDiv.innerHTML = `<div class="alert-green">${apiMessage(data, t('reset.success', 'Hasło zmienione! Przekierowanie...'))}</div>`;
+                    setTimeout(() => window.location.href = "/", 2000);
+                } else {
+                    msgDiv.innerHTML = `<div class="alert-red">${apiMessage(data, '')}</div>`;
+                    btn.disabled = false;
+                    btn.textContent = t('reset.submit_button', 'Zmień hasło');
+                }
+            } catch (err) {
+                msgDiv.innerHTML = `<div class="alert-red">${t('reset.connection_error', 'Błąd połączenia z serwerem.')}</div>`;
+                btn.disabled = false;
+                btn.textContent = t('reset.submit_button', 'Zmień hasło');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOMotywator</title>
+    
+        <link rel="stylesheet" href="style.css?v=20260213">
+    
+</head>
+<body>
+    <div class="container">
+        
+        <!-- GLOBALNY HEADER -->
+        <div id="app-header" class="header-bar hidden">
+            <h1 id="header-title">🏡 Mój Dom</h1>
+            <button class="hamburger-btn" onclick="toggleMenu()">☰</button>
+            
+            <div id="menu-dropdown" class="menu-dropdown hidden">
+                <div class="menu-item" onclick="openScreen('main-screen')" data-i18n="hamburger.main">🏠 Ekran główny</div>
+                <div class="menu-item" onclick="openScreen('settings-house-screen')" data-i18n="hamburger.house_settings">⚙️ Ustawienia Domu</div>
+                <div class="menu-item" onclick="openScreen('profile-screen')" data-i18n="hamburger.profile">👤 Profil</div>
+                <div class="menu-item" onclick="pokazHistorie()" data-i18n="hamburger.history">📜 Historia</div>
+                <div class="menu-item" onclick="openScreen('about-screen')" data-i18n="hamburger.about">ℹ️ O aplikacji</div>
+                <div class="menu-item danger" onclick="wyloguj()" data-i18n="hamburger.logout">🚪 Wyloguj</div>
+            </div>
+        </div>
+
+        <!-- EKRAN AUTORYZACJI -->
+        <div id="auth-screen">
+            <div class="lang-switch" aria-label="Language switcher">
+                <button type="button" class="lang-btn" data-lang="pl" data-i18n="common.lang_pl">PL</button>
+                <button type="button" class="lang-btn" data-lang="en" data-i18n="common.lang_en">EN</button>
+            </div>
+            <h1 class="center-text mb-30">🔐 DOMotywator</h1>
+            <div id="auth-message" class="center-text auth-message"></div>
+            <form id="login-form">
+                <input type="text" id="login-login" placeholder="Login" data-i18n-placeholder="auth.login_placeholder" required autocomplete="username">
+                <input type="password" id="login-password" placeholder="Hasło" data-i18n-placeholder="auth.password_placeholder" required autocomplete="current-password">
+                <button type="submit" data-i18n="auth.login_button">Zaloguj się</button>
+                <div class="center-text mt-20 text-sm"><a href="#" onclick="zapomnialemHasla()" data-i18n="auth.forgot_password_link">Zapomniałem hasła</a></div>
+                <div class="center-text mt-20 text-sm"><a href="#" onclick="pokazRejestracje()" data-i18n="auth.register_link">Załóż konto</a></div>
+            </form>
+            <form id="register-form" class="hidden">
+                <input type="text" id="reg-login" placeholder="Login" data-i18n-placeholder="auth.login_placeholder" required maxlength="20">
+                <input type="email" id="reg-email" placeholder="E-mail" data-i18n-placeholder="auth.email_placeholder" required>
+                <input type="password" id="reg-password" placeholder="Hasło" data-i18n-placeholder="auth.password_placeholder" required>
+                <input type="password" id="reg-password-confirm" placeholder="Powtórz hasło" data-i18n-placeholder="auth.password_confirm_placeholder" required>
+                <div class="center-text text-xs text-muted" data-i18n="auth.privacy_text">Rejestrując się, akceptujesz Politykę prywatności.</div>
+                <button type="submit" class="btn-success" data-i18n="auth.register_button">Zarejestruj się</button>
+                <div class="center-text mt-20 text-sm"><a href="#" onclick="pokazLogowanie()" data-i18n="auth.back_to_login_link">Wróć do logowania</a></div>
+            </form>
+            <div class="center-text mt-20 text-sm"><a href="/privacy.html" data-i18n="auth.privacy_link">Polityka prywatności</a></div>
+        </div>
+
+        <!-- EKRAN Zapomniałem hasła -->
+        <div id="forgot-password-screen" class="hidden">
+            <h2 class="center-text text-primary" data-i18n="auth.forgot_screen_title">Reset hasła</h2>
+            <p class="center-text text-muted mb-20" data-i18n="auth.forgot_screen_description">Podaj adres e-mail, aby otrzymać link do zmiany hasła.</p>
+            <div id="forgot-message" class="center-text mt-20"></div>
+    
+        <form id="forgot-password-form">
+            <input type="email" id="forgot-email" placeholder="Twój e-mail" data-i18n-placeholder="auth.forgot_email_placeholder" required>
+            <button type="submit" data-i18n="auth.forgot_submit_button">Wyślij link</button>
+            <button type="button" class="btn-secondary" onclick="window.openScreen('auth-screen')" data-i18n="auth.forgot_cancel_button">Anuluj</button>
+        </form>
+        </div>
+
+        
+
+
+        <!-- EKRAN BEZ DOMU -->
+        <div id="no-house-screen" class="hidden">
+            <div id="no-house-message" class="alert-red hidden"></div>
+            <h1 class="center-text mb-20" data-i18n="no_house.welcome">Witaj! 👋</h1>
+            <div class="card">
+                <h3 data-i18n="no_house.create_title">Stwórz nowy dom</h3>
+                <input type="text" id="new-house-name" placeholder="Nazwa" data-i18n-placeholder="no_house.house_name_placeholder" maxlength="20">
+                <button onclick="stworzDom()" data-i18n="no_house.create_button">Stwórz</button>
+            </div>
+            <div class="center-text my-15" data-i18n="no_house.or_text">- LUB -</div>
+            <div class="card">
+                <h3 data-i18n="no_house.join_title">Dołącz do domu</h3>
+                <input type="text" id="join-code" placeholder="KOD DOMU" data-i18n-placeholder="no_house.join_code_placeholder" maxlength="6" class="join-code-input">
+                <button onclick="dolaczDoDomu()" class="btn-secondary" data-i18n="no_house.join_button">Dołącz</button>
+            </div>
+            <button class="btn-danger" onclick="wyloguj()" data-i18n="no_house.logout_button">Wyloguj</button>
+        </div>
+
+        <!-- EKRAN GŁÓWNY -->
+        <div id="main-screen" class="hidden">
+            <div id="main-message" class="alert-info hidden mb-10"></div>
+            <!-- SEKCJA ZWYCIĘZCY -->
+            <div id="winner-section" class="card hidden winner-banner">
+                <div class="winner-inline">
+                    <span class="winner-trophy" aria-hidden="true">🏆</span>
+                    <div class="winner-line">
+                        <span data-i18n="main.winner_label">Zwycięzca:</span>
+                        <strong id="winner-name" class="winner-name">Nazwa Gracza</strong>
+                    </div>
+                    <div class="winner-line winner-goal-line">
+                        <span data-i18n="main.goal_compact_label">Cel:</span>
+                        <strong id="winner-goal-display" class="winner-value">1000</strong>
+                        <span data-i18n="main.points_short">pkt</span>
+                    </div>
+                </div>
+            </div>
+            <!-- SEKCJA CELU GRY (Domyślnie ukryta) -->
+            <div id="goal-display-container" class="card goal-banner">
+                <div class="goal-inline">
+                    <span class="goal-emoji">🎯</span>
+                    <span data-i18n="main.goal_label">Cel gry:</span>
+                    <strong id="current-goal-display" class="goal-value">1000</strong>
+                    <span data-i18n="main.goal_to_earn">pkt do zdobycia</span>
+                </div>
+            </div>
+
+            <!-- FORMULARZ Z WYSZUKIWARKĄ -->
+            <form id="task-form" class="mb-25">
+                <label class="label-strong" data-i18n="main.add_points_label">Dodaj punkty:</label>
+                
+                <!-- Wrapper wyszukiwarki (teraz zajmuje 100% szerokości) -->
+                <div class="task-input-wrapper mb-15">
+                    <input type="text" id="task-search-input" placeholder="Wpisz lub wybierz zadanie..." data-i18n-placeholder="main.task_search_placeholder" autocomplete="off">
+                    <!-- Lista podpowiedzi -->
+                    <div id="task-dropdown-list" class="hidden-list"></div>
+                </div>
+
+                <!-- Przycisk pod spodem -->
+                <button type="submit" id="add-points-btn"  data-i18n="main.add_points_button">
+                    Dodaj punkty
+                </button>
+            </form>
+
+
+
+            <h3 class="mb-15 text-dark" data-i18n="main.ranking_title">🏆 Ranking</h3>
+            <div id="ranking-list"></div>
+        </div>
+
+        <!-- EKRAN USTAWIEŃ DOMU -->
+        <div id="settings-house-screen" class="hidden">
+            <div class="card">
+                <button onclick="openScreen('house-invites-screen')" class="btn-outline" data-i18n="settings_house.invites_button">✉️ Zaproszenia</button>
+                <button id="owner-management-zone" onclick="window.pokazZarzadzanieDomownikami()" class="btn-outline hidden" data-i18n="settings_house.members_button">👥 Domownicy</button>
+                <button id="menu-task-settings" onclick="openScreen('task-menu-screen')" class="btn-outline hidden" data-i18n="settings_house.tasks_button">📝 Zadania</button>
+                <button onclick="openScreen('goal-screen')" class="btn-outline" data-i18n="settings_house.goal_button">🎯 Cel gry</button>
+                <button onclick="openScreen('house-settings-screen')" class="btn-outline" data-i18n="settings_house.settings_button">⚙️ Ustawienia</button>
+            </div>
+            <button class="btn-secondary" onclick="window.location.reload()" data-i18n="settings_house.back_button">← Powrót</button>
+        </div>
+
+        <!-- NOWY EKRAN: ZAPROSZENIA -->
+        <div id="house-invites-screen" class="hidden">
+            <div id="invite-copy-message" class="alert-info hidden"></div>
+            <div class="card">
+                <p data-i18n="house_invites.code_label">Kod dołączenia:</p>
+                <span id="display-code" class="house-code">------</span>
+                <button onclick="copyLink()" class="btn-outline btn-sm" data-i18n="house_invites.copy_link_button">📋 Kopiuj link</button>
+            </div>
+            <button class="btn-secondary" onclick="openScreen('settings-house-screen')" data-i18n="house_invites.back_button">← Powrót</button>
+        </div>
+
+        <!-- NOWY EKRAN: CEL GRY -->
+        <div id="goal-screen" class="hidden">
+            <div id="goal-message" class="alert-info hidden"></div>
+            <div class="card" id="goal-card">
+                <h3 data-i18n="goal_screen.card_title">🎯 Cel Gry</h3>
+                <p class="text-muted text-xs mb-10" data-i18n="goal_screen.description">
+                    Ustaw liczbę punktów do zdobycia. Pierwsza osoba wygrywa.
+                    Ustaw 0, aby wyłączyć.
+                </p>
+                <input type="text" id="goal-input" placeholder="Np. 1000" data-i18n-placeholder="goal_screen.input_placeholder" inputmode="numeric" pattern="[0-9]{1,6}" maxlength="6">
+                <button onclick="zapiszCel()" class="btn-info" data-i18n="goal_screen.save_button">Zapisz Cel</button>
+            </div>
+
+            <div id="goal-reset-zone" class="card card-warning hidden">
+                <h3 class="text-warning" data-i18n="goal_screen.reset_title">Reset Gry</h3>
+                <button onclick="resetujGre()" class="btn-outline" data-i18n="goal_screen.reset_button">Zresetuj punkty (Nowa Gra)</button>
+                <p class="text-xs text-muted mt-20" data-i18n="goal_screen.reset_description">Zeruje punkty wszystkim domownikom i czyści historię. Cel pozostaje.</p>
+            </div>
+            <button class="btn-secondary" onclick="openScreen('settings-house-screen')" data-i18n="goal_screen.back_button">← Powrót</button>
+        </div>
+
+        <!-- NOWY EKRAN: USTAWIENIA -->
+        <div id="house-settings-screen" class="hidden">
+            <div id="house-settings-message" class="alert-info hidden"></div>
+            <div id="owner-delete-zone" class="card hidden card-danger">
+                <h3 class="text-danger" data-i18n="house_settings.danger_zone_title">Strefa Niebezpieczna</h3>
+                <button class="btn-danger" onclick="usunDom()" data-i18n="house_settings.delete_house_button">🗑️ Usuń Dom</button>
+            </div>
+            <button id="leave-btn" class="btn-danger hidden" onclick="opuscDom()" data-i18n="house_settings.leave_house_button">🏃 Opuść Dom</button>
+            <button class="btn-secondary" onclick="openScreen('settings-house-screen')" data-i18n="house_settings.back_button">← Powrót</button>
+        </div>
+
+        <!-- NOWY EKRAN: PROFIL -->
+        <div id="profile-screen" class="hidden">
+            <div class="card">
+                <button onclick="openScreen('profile-change-password-screen')" class="btn-info" data-i18n="profile.change_password_menu_button">🔑 Zmiana hasła</button>
+                <button onclick="openScreen('profile-delete-account-screen')" class="btn-info" data-i18n="profile.delete_account_menu_button">🗑️ Usuwanie konta</button>
+            </div>
+            <button class="btn-secondary" onclick="openScreen('main-screen')" data-i18n="profile.back_button">← Powrót</button>
+        </div>
+
+        <!-- NOWY EKRAN: ZMIANA HASŁA -->
+        <div id="profile-change-password-screen" class="hidden">
+            <div class="card">
+                <div id="profile-change-message" class="form-message"></div>
+                <form id="profile-change-password-form">
+                    <div class="password-field">
+                        <input type="password" id="profile-current-pass" placeholder="Obecne hasło" data-i18n-placeholder="profile.current_password_placeholder" required minlength="5">
+                    </div>
+                    <div class="password-field">
+                        <input type="password" id="profile-new-pass" placeholder="Nowe hasło" data-i18n-placeholder="profile.new_password_placeholder" required minlength="5">
+                        <button type="button" class="toggle-pass" data-target="profile-new-pass" aria-label="Pokaż hasło" data-i18n="profile.show_password">Pokaż</button>
+                    </div>
+                    <div class="password-field">
+                        <input type="password" id="profile-new-pass-confirm" placeholder="Powtórz hasło" data-i18n-placeholder="profile.confirm_password_placeholder" required minlength="5">
+                        <button type="button" class="toggle-pass" data-target="profile-new-pass-confirm" aria-label="Pokaż hasło" data-i18n="profile.show_password">Pokaż</button>
+                    </div>
+                    <button type="submit" class="btn-info" data-i18n="profile.submit_change_password">Zmień hasło</button>
+                </form>
+            </div>
+            <button class="btn-secondary" onclick="openScreen('profile-screen')" data-i18n="profile.back_button">← Powrót</button>
+        </div>
+
+        <!-- NOWY EKRAN: USUWANIE KONTA -->
+        <div id="profile-delete-account-screen" class="hidden">
+            <div class="card card-danger" id="profile-delete-card">
+                <div id="profile-delete-message" class="form-message"></div>
+                <h3 class="text-danger mb-10" data-i18n="profile.danger_zone_title">Strefa niebezpieczna</h3>
+                <p class="text-sm text-muted mb-20" data-i18n="profile.danger_zone_description">
+                    Usunięcie konta jest natychmiastowe i nieodwracalne.
+                    Jeśli jesteś właścicielem domu, usuniemy również cały dom.
+                </p>
+                <button id="delete-account-btn" class="btn-danger" data-i18n="profile.delete_account_button">🗑️ Usuń konto</button>
+            </div>
+            <button class="btn-secondary" onclick="openScreen('profile-screen')" data-i18n="profile.back_button">← Powrót</button>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- NOWY EKRAN: ZARZĄDZANIE DOMOWNIKAMI -->
+        <!-- ========================================== -->
+        <div id="manage-members-screen" class="hidden">
+            <div id="manage-members-message" class="alert-info hidden"></div>
+    
+            <!-- Kontener na listę, którego JS szukał i nie znalazł -->
+                <div id="members-list-container">
+                 <div class="center-text" data-i18n="manage_members.loading">Ładowanie...</div>
+                </div>
+
+            <!-- Przycisk powrotu -->
+            <button onclick="window.openScreen('settings-house-screen')" class="btn-secondary mt-20" data-i18n="manage_members.back_to_settings">
+             ← Wróć do ustawień
+            </button>
+        </div>
+
+
+
+
+        <!-- EKRAN MENU ZADAŃ -->
+        <div id="task-menu-screen" class="hidden">
+            <div class="task-menu-actions">
+                <button onclick="openScreen('task-add-screen')" class="btn-outline" data-i18n="task_menu.add_new_task_button">➕ Dodaj nowe zadanie</button>
+                <button onclick="pokazListeZadan()" class="btn-outline" data-i18n="task_menu.task_list_button">📋 Lista zadań (Edycja)</button>
+            </div>
+            <button class="btn-secondary" onclick="openScreen('settings-house-screen')" data-i18n="task_menu.back_to_settings_button">← Wróć do ustawień</button>
+        </div>
+
+        <!-- EKRAN DODAWANIA ZADANIA -->
+        <div id="task-add-screen" class="hidden">
+            <div class="card" id="task-add-card">
+                <div id="task-add-message" class="form-message"></div>
+                <form id="add-task-form">
+                    <input type="text" id="new-task-name" placeholder="Nazwa zadania" data-i18n-placeholder="task_add.name_placeholder" required maxlength="25">
+                    <input type="text" id="new-task-points" placeholder="Punkty" data-i18n-placeholder="task_add.points_placeholder" required inputmode="numeric" pattern="[0-9]{1,4}" maxlength="4">
+                    <button type="submit" class="btn-info" data-i18n="task_add.save_button">Zapisz zadanie</button>
+                </form>
+            </div>
+            <button class="btn-secondary" onclick="openScreen('task-menu-screen')" data-i18n="task_add.back_button">← Wróć</button>
+        </div>
+
+        <!-- EKRAN EDYCJI ZADANIA -->
+        <div id="task-edit-screen" class="hidden">
+            <div class="card" id="task-edit-card">
+                <div id="task-edit-message" class="form-message"></div>
+                <form id="edit-task-form">
+                    <input type="hidden" id="edit-task-id">
+                    <input type="text" id="edit-task-name" placeholder="Nazwa zadania" data-i18n-placeholder="task_edit.name_placeholder" required maxlength="25">
+                    <input type="text" id="edit-task-points" placeholder="Punkty" data-i18n-placeholder="task_edit.points_placeholder" required inputmode="numeric" pattern="[0-9]{1,4}" maxlength="4">
+                    <button type="submit" class="btn-info" data-i18n="task_edit.save_button">Zapisz zmiany</button>
+                </form>
+            </div>
+            <button class="btn-secondary" onclick="pokazListeZadan()" data-i18n="task_edit.cancel_button">← Anuluj</button>
+        </div>
+
+        <!-- EKRAN LISTY ZADAŃ -->
+        <div id="task-list-screen" class="hidden">
+            <div id="task-list-message" class="alert-info hidden"></div>
+            <div id="full-tasks-list"></div>
+            <button class="btn-secondary mt-20" onclick="openScreen('task-menu-screen')" data-i18n="task_list.back_to_menu_button">← Wróć do menu zadań</button>
+        </div>
+
+        <!-- EKRAN HISTORII/ZAPROSZENIA -->
+        <div id="history-screen" class="hidden">
+            <div id="history-list" class="history-list"></div>
+            <button class="btn-secondary mt-20" onclick="openScreen('main-screen')" data-i18n="history.back_button">← Powrót</button>
+        </div>
+
+        <div id="about-screen" class="hidden">
+            <div class="card">
+                <h3>DOMotywator</h3>
+                <p class="text-muted mt-20"><span data-i18n="about.version_label">Wersja:</span> <strong id="about-version-value">-</strong></p>
+                <p class="text-muted mt-20" data-i18n="about.description">DOMotywator zamienia obowiązek na grywalizację.</p>
+                <button class="btn-outline mt-20" onclick="window.location.href='/privacy.html?lang=' + (window.i18n ? window.i18n.getLanguage() : 'pl')" data-i18n="about.privacy_button">🔒 Polityka prywatności</button>
+                <button class="btn-outline mt-20" onclick="window.location.href='/terms.html?lang=' + (window.i18n ? window.i18n.getLanguage() : 'pl')" data-i18n="about.terms_button">📄 Regulamin aplikacji</button>
+                <button class="btn-outline mt-20" onclick="window.location.href='/license.html?lang=' + (window.i18n ? window.i18n.getLanguage() : 'pl')" data-i18n="about.license_button">⚖️ Licencja</button>
+                <button class="btn-outline mt-20" type="button" onclick="openCoffeeLink()" data-i18n="about.coffee_button">☕ Doceniasz moją pracę? Możesz postawić mi kawę</button>
+            </div>
+            <button class="btn-secondary" onclick="openScreen('main-screen')" data-i18n="about.back_button">← Powrót</button>
+        </div>
+        
+        <div id="invite-screen" class="hidden">
+            <h1 class="center-text" data-i18n="invites.screen_title">💌 Zaproszenie</h1>
+            <div id="invite-message" class="alert-info hidden"></div>
+            <div class="card">
+                <p data-i18n="invites.house_label">Dom:</p><h2 id="invite-house-name" class="invite-house-name">...</h2>
+                <p><span data-i18n="invites.owner_label">Właściciel:</span> <strong id="invite-owner">...</strong></p>
+            </div>
+            <div id="invite-warning" class="alert-orange hidden"></div>
+            <button id="confirm-join-btn" onclick="potwierdzDolaczenie()" class="btn-success" data-i18n="invites.join_button">Dołączam!</button>
+            <button onclick="anulujZaproszenie()" class="btn-secondary" data-i18n="invites.cancel_button">Anuluj</button>
+        </div>
+    </div>
+    <script src="js/state.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/modal.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/tasks.js"></script>
+    <script src="js/invites.js"></script>
+    <script src="js/house.js"></script>
+    <script src="script.js"></script>
+
+
+    <div id="modal-backdrop" class="modal-backdrop hidden">
+  <div class="modal">
+    <h3 id="modal-title"></h3>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button id="modal-cancel" class="btn-secondary hidden" data-i18n="common.cancel">Anuluj</button>
+      <button id="modal-ok" class="btn-info" data-i18n="common.ok">OK</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

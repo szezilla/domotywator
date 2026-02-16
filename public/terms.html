@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regulamin - DOMotywator</title>
+    <link rel="stylesheet" href="style.css?v=20260213">
+    <style>
+        .legal-container {
+            min-height: calc(100vh - 30px);
+            max-height: calc(100vh - 30px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .legal-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+        .legal-back-btn {
+            margin-top: 12px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container legal-container">
+        <div class="header-bar" style="justify-content: center;">
+            <h1 id="terms-title" style="color:#667eea;">Regulamin aplikacji</h1>
+        </div>
+
+        <div class="legal-scroll">
+        <div id="terms-pl" class="card" style="text-align: left; width: 100%; box-sizing: border-box; overflow-wrap: anywhere;">
+            <p class="text-muted text-xs mb-10">Data ostatniej aktualizacji: 12.02.2026</p>
+
+            TWÓJ REGULAMIN
+            
+        </div>
+
+        <div id="terms-en" class="card hidden" style="text-align: left; width: 100%; box-sizing: border-box; overflow-wrap: anywhere;">
+            <p class="text-muted text-xs mb-10">Last updated: 2026-02-12</p>
+
+            YOUR TERMS
+    
+        </div>
+        </div>
+
+        <button id="terms-back-btn" class="btn-secondary legal-back-btn" onclick="history.back()">← Wróć</button>
+    </div>
+    <script>
+        (function initTermsLanguage() {
+            var titleEl = document.getElementById('terms-title');
+            var backBtn = document.getElementById('terms-back-btn');
+            var pl = document.getElementById('terms-pl');
+            var en = document.getElementById('terms-en');
+            var params = new URLSearchParams(window.location.search);
+            var fromQuery = params.get('lang');
+            var saved = localStorage.getItem('lang');
+            var browser = (navigator.language || '').slice(0, 2).toLowerCase();
+            var lang = (fromQuery === 'pl' || fromQuery === 'en') ? fromQuery : ((saved === 'pl' || saved === 'en') ? saved : (browser === 'en' ? 'en' : 'pl'));
+
+            var isEn = lang === 'en';
+            if (pl) pl.classList.toggle('hidden', isEn);
+            if (en) en.classList.toggle('hidden', !isEn);
+            document.documentElement.lang = lang;
+            if (titleEl) titleEl.textContent = isEn ? 'Terms of Service' : 'Regulamin aplikacji';
+            if (backBtn) backBtn.textContent = isEn ? '← Back' : '← Wróć';
+        })();
+    </script>
+</body>
+</html>

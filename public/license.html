@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Licencja - DOMotywator</title>
+    <link rel="stylesheet" href="style.css?v=20260213">
+    <style>
+        .legal-container {
+            min-height: calc(100vh - 30px);
+            max-height: calc(100vh - 30px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .legal-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+        .legal-back-btn {
+            margin-top: 12px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container legal-container">
+        <div class="header-bar" style="justify-content: center;">
+            <h1 id="license-title" style="color:#667eea;">Licencja</h1>
+        </div>
+
+        <div class="legal-scroll">
+        <div id="license-pl" class="card" style="text-align: left; width: 100%; box-sizing: border-box; overflow-wrap: anywhere;">
+            <p class="text-muted text-xs mb-10">Licencja aplikacji: GNU GPL v3</p>
+            <p>Aplikacja korzysta z bibliotek open source. Poniżej lista bezpośrednich zależności wraz z typem licencji.</p>
+
+            <h3 class="mb-10 mt-20">Biblioteki i licencje</h3>
+            <ul class="mt-20 pl-10">
+                <li>@types/express 4.17.25 - MIT</li>
+                <li>@types/node 20.19.32 - MIT</li>
+                <li>bcryptjs 2.4.3 - MIT</li>
+                <li>body-parser 1.20.4 - MIT</li>
+                <li>cors 2.8.6 - MIT</li>
+                <li>cross-env 10.1.0 - MIT</li>
+                <li>cypress 15.9.0 - MIT</li>
+                <li>dotenv 16.6.1 - BSD-2-Clause</li>
+                <li>express 4.22.1 - MIT</li>
+                <li>jest 30.2.0 - MIT</li>
+                <li>jsonwebtoken 9.0.3 - MIT</li>
+                <li>nodemailer 7.0.13 - MIT-0</li>
+                <li>sqlite3 5.1.7 - BSD-3-Clause</li>
+                <li>supertest 7.2.2 - MIT</li>
+                <li>typescript 5.9.3 - Apache-2.0</li>
+            </ul>
+
+            <p class="mt-20">Pełne treści licencji bibliotek znajdują się w ich repozytoriach oraz paczkach npm.</p>
+        </div>
+
+        <div id="license-en" class="card hidden" style="text-align: left; width: 100%; box-sizing: border-box; overflow-wrap: anywhere;">
+            <p class="text-muted text-xs mb-10">Application license: GNU GPL v3</p>
+            <p>This application uses open-source libraries. Below is the list of direct dependencies with their license type.</p>
+
+            <h3 class="mb-10 mt-20">Libraries and licenses</h3>
+            <ul class="mt-20 pl-10">
+                <li>@types/express 4.17.25 - MIT</li>
+                <li>@types/node 20.19.32 - MIT</li>
+                <li>bcryptjs 2.4.3 - MIT</li>
+                <li>body-parser 1.20.4 - MIT</li>
+                <li>cors 2.8.6 - MIT</li>
+                <li>cross-env 10.1.0 - MIT</li>
+                <li>cypress 15.9.0 - MIT</li>
+                <li>dotenv 16.6.1 - BSD-2-Clause</li>
+                <li>express 4.22.1 - MIT</li>
+                <li>jest 30.2.0 - MIT</li>
+                <li>jsonwebtoken 9.0.3 - MIT</li>
+                <li>nodemailer 7.0.13 - MIT-0</li>
+                <li>sqlite3 5.1.7 - BSD-3-Clause</li>
+                <li>supertest 7.2.2 - MIT</li>
+                <li>typescript 5.9.3 - Apache-2.0</li>
+            </ul>
+
+            <p class="mt-20">Full license texts are available in library repositories and npm package sources.</p>
+        </div>
+        </div>
+
+        <button id="license-back-btn" class="btn-secondary legal-back-btn" onclick="history.back()">← Wróć</button>
+    </div>
+    <script>
+        (function initLicenseLanguage() {
+            var titleEl = document.getElementById('license-title');
+            var backBtn = document.getElementById('license-back-btn');
+            var pl = document.getElementById('license-pl');
+            var en = document.getElementById('license-en');
+            var params = new URLSearchParams(window.location.search);
+            var fromQuery = params.get('lang');
+            var saved = localStorage.getItem('lang');
+            var browser = (navigator.language || '').slice(0, 2).toLowerCase();
+            var lang = (fromQuery === 'pl' || fromQuery === 'en') ? fromQuery : ((saved === 'pl' || saved === 'en') ? saved : (browser === 'en' ? 'en' : 'pl'));
+
+            var isEn = lang === 'en';
+            if (pl) pl.classList.toggle('hidden', isEn);
+            if (en) en.classList.toggle('hidden', !isEn);
+            document.documentElement.lang = lang;
+            if (titleEl) titleEl.textContent = isEn ? 'License' : 'Licencja';
+            if (backBtn) backBtn.textContent = isEn ? '← Back' : '← Wróć';
+        })();
+    </script>
+</body>
+</html>

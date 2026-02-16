@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node", "express"]
+  },
+  "files": [
+    "types/global.d.ts",
+    "types/express.d.ts",
+    "types/shims.d.ts",
+    "public/script.js",
+    "public/js/auth.js",
+    "public/js/house.js",
+    "public/js/invites.js",
+    "public/js/state.js",
+    "public/js/tasks.js",
+    "public/js/ui.js",
+    "server.js",
+    "routes/authRoutes.js",
+    "routes/houseRoutes.js",
+    "routes/taskRoutes.js",
+    "middleware/auth.js",
+    "config/db.js"
+  ]
+}
