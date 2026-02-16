@@ -1,0 +1,5 @@
+# Oficjalne pole dla Buy Me a Coffee (obsłuży obcokrajowców)
+buy_me_a_coffee: szezilla
+
+# Pole dla dowolnych innych linków (obsłuży Polaków)
+custom: ["https://buycoffee.to/szezilla"]

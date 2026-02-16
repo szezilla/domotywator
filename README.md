@@ -7,6 +7,12 @@
 DOMotywator to aplikacja webowa (SPA) do grywalizacji obowiązków domowych.  
 Użytkownicy tworzą domy, dodają zadania punktowane, zdobywają punkty i rywalizują w rankingu.
 
+
+### Wesprzyj projekt / Support the project ☕
+
+[![Wspieraj lokalnie](https://img.shields.io/badge/Postaw_kawę-buycoffee.to-yellow?style=for-the-badge)](https://buycoffee.to/szezilla)
+[![Support globally](https://img.shields.io/badge/Buy_Me_A_Coffee-Donate-orange?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/szezilla)
+
 ## 2. Stos technologiczny
 **Backend**
 - Node.js
