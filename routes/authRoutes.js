@@ -12,6 +12,15 @@ const resetTemplate = require('../config/resetEmailTemplate');
 const weryfikujToken = require('../middleware/auth');
 const SECRET_KEY = process.env.SECRET_KEY || 'TWOJE_SUPER_TAJNE_HASLO_SERWERA_ZMIEN_MNIE';
 const DOMENA = process.env.DOMENA || `http://localhost:${process.env.PORT || 3000}`;
+const LOGIN_FAIL_MESSAGE = 'Błędny login/email lub hasło';
+const LOGIN_RATE_LIMIT_WINDOW_MS = parseInt(process.env.LOGIN_RATE_LIMIT_WINDOW_MS || '', 10) || 15 * 60 * 1000;
+const LOGIN_RATE_LIMIT_BLOCK_MS = parseInt(process.env.LOGIN_RATE_LIMIT_BLOCK_MS || '', 10) || 15 * 60 * 1000;
+const LOGIN_RATE_LIMIT_MAX_ATTEMPTS = parseInt(process.env.LOGIN_RATE_LIMIT_MAX_ATTEMPTS || '', 10) || 10;
+
+/** @type {Map<string, { count: number, windowStart: number, blockedUntil: number }>} */
+const loginAttemptsByIp = new Map();
+/** @type {Map<string, { count: number, windowStart: number, blockedUntil: number }>} */
+const loginAttemptsByIdentifier = new Map();
 
 // Konfiguracja Mailera
 const mailPort = parseInt(process.env.MAIL_PORT || '', 10) || 465;
@@ -58,30 +67,215 @@ function normalizeLang(value) {
     return value === 'en' ? 'en' : 'pl';
 }
 
-router.post('/login', (req, res) => {
-    const { login, haslo } = req.body;
-    db.get("SELECT * FROM uzytkownicy WHERE login = ?", [login], async (err, user) => {
-        if (!user) {
-            return res.json({ sukces: false, wiadomosc: 'Błędny login lub hasło' });
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
+function normalizeLogin(value) {
+    return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
+function normalizeEmail(value) {
+    return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+/**
+ * @param {string} value
+ * @returns {boolean}
+ */
+function looksLikeEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+/**
+ * Priorytet:
+ * 1) jeśli wartość wygląda jak e-mail -> wyszukaj po e-mail
+ * 2) w przeciwnym razie -> wyszukaj po login
+ * @param {string} identifier
+ * @returns {Promise<any>}
+ */
+function findUserByIdentifier(identifier) {
+    return new Promise((resolve, reject) => {
+        if (looksLikeEmail(identifier)) {
+            db.get("SELECT * FROM uzytkownicy WHERE lower(email) = lower(?)", [identifier], (err, row) => {
+                if (err) return reject(err);
+                resolve(row);
+            });
+            return;
         }
-        if (user.czy_potwierdzony !== 1) {
-            return res.json({ sukces: false, wiadomosc: 'Konto nieaktywne. Sprawdź email.' });
-        }
-        if (!user || !(await bcrypt.compare(haslo, user.haslo))) {
-            return res.json({ sukces: false, wiadomosc: 'Błędny login lub hasło' });
-        }
-        
-        const token = jwt.sign({ login: user.login, id: user.id }, SECRET_KEY, { expiresIn: '7d' });
-        res.json({ sukces: true, login: user.login, token: token, dom_id: user.dom_id });
+
+        db.get("SELECT * FROM uzytkownicy WHERE login = ?", [identifier], (err, row) => {
+            if (err) return reject(err);
+            resolve(row);
+        });
     });
+}
+
+/**
+ * @param {import('express').Request} req
+ * @returns {string}
+ */
+function getClientIp(req) {
+    const xff = req.headers['x-forwarded-for'];
+    if (typeof xff === 'string' && xff.trim()) return xff.split(',')[0].trim();
+    return req.ip || req.socket.remoteAddress || 'unknown';
+}
+
+/**
+ * @param {string} identifier
+ * @returns {string}
+ */
+function maskIdentifier(identifier) {
+    if (!identifier) return 'empty';
+    if (looksLikeEmail(identifier)) {
+        const [local, domain = ''] = identifier.split('@');
+        const localMasked = local.length <= 2 ? `${local[0] || '*'}*` : `${local.slice(0, 2)}***`;
+        return `${localMasked}@${domain}`;
+    }
+    return `${identifier.slice(0, 2)}***`;
+}
+
+/**
+ * @param {Map<string, { count: number, windowStart: number, blockedUntil: number }>} store
+ * @param {string} key
+ * @param {number} now
+ * @returns {boolean}
+ */
+function isRateLimited(store, key, now) {
+    const entry = store.get(key);
+    if (!entry) return false;
+    if (entry.blockedUntil > now) return true;
+    if (now - entry.windowStart > LOGIN_RATE_LIMIT_WINDOW_MS) {
+        store.delete(key);
+        return false;
+    }
+    return false;
+}
+
+/**
+ * @param {Map<string, { count: number, windowStart: number, blockedUntil: number }>} store
+ * @param {string} key
+ * @param {number} now
+ */
+function registerFailedAttempt(store, key, now) {
+    const current = store.get(key);
+    if (!current || now - current.windowStart > LOGIN_RATE_LIMIT_WINDOW_MS) {
+        store.set(key, { count: 1, windowStart: now, blockedUntil: 0 });
+        return;
+    }
+    current.count += 1;
+    if (current.count >= LOGIN_RATE_LIMIT_MAX_ATTEMPTS) {
+        current.blockedUntil = now + LOGIN_RATE_LIMIT_BLOCK_MS;
+        current.count = 0;
+        current.windowStart = now;
+    }
+    store.set(key, current);
+}
+
+/**
+ * @param {string} ip
+ * @param {string} identifier
+ * @param {string} reason
+ */
+function auditFailedLogin(ip, identifier, reason) {
+    console.warn(`[AUTH_AUDIT] failed_login ip=${ip} identifier=${maskIdentifier(identifier)} reason=${reason}`);
+}
+
+/**
+ * @param {string} ip
+ * @param {string} identifier
+ */
+function clearFailedAttempts(ip, identifier) {
+    loginAttemptsByIp.delete(ip);
+    if (identifier) loginAttemptsByIdentifier.delete(identifier);
+}
+
+router.post('/login', (req, res) => {
+    const rawIdentifier = req.body ? (req.body.identifier ?? req.body.login) : undefined;
+    const identifier = normalizeLogin(rawIdentifier);
+    const haslo = req.body ? req.body.haslo : '';
+    const now = Date.now();
+    const ip = getClientIp(req);
+    const identifierKey = normalizeEmail(identifier);
+
+    if (isRateLimited(loginAttemptsByIp, ip, now) || isRateLimited(loginAttemptsByIdentifier, identifierKey, now)) {
+        auditFailedLogin(ip, identifier, 'rate_limited');
+        return res.status(429).json({
+            sukces: false,
+            messageKey: 'api.auth.login.rate_limited',
+            wiadomosc: 'Zbyt wiele prób logowania. Spróbuj ponownie później.'
+        });
+    }
+
+    if (!identifier || typeof haslo !== 'string' || !haslo) {
+        registerFailedAttempt(loginAttemptsByIp, ip, now);
+        if (identifierKey) registerFailedAttempt(loginAttemptsByIdentifier, identifierKey, now);
+        auditFailedLogin(ip, identifier, 'invalid_payload');
+        return res.json({
+            sukces: false,
+            messageKey: 'api.auth.login.invalid_credentials',
+            wiadomosc: LOGIN_FAIL_MESSAGE
+        });
+    }
+
+    findUserByIdentifier(identifier)
+        .then(async (user) => {
+            if (!user || user.czy_potwierdzony !== 1) {
+                registerFailedAttempt(loginAttemptsByIp, ip, now);
+                registerFailedAttempt(loginAttemptsByIdentifier, identifierKey, now);
+                auditFailedLogin(ip, identifier, !user ? 'user_not_found' : 'account_not_activated');
+                return res.json({
+                    sukces: false,
+                    messageKey: 'api.auth.login.invalid_credentials',
+                    wiadomosc: LOGIN_FAIL_MESSAGE
+                });
+            }
+
+            const passwordOk = await bcrypt.compare(haslo, user.haslo);
+            if (!passwordOk) {
+                registerFailedAttempt(loginAttemptsByIp, ip, now);
+                registerFailedAttempt(loginAttemptsByIdentifier, identifierKey, now);
+                auditFailedLogin(ip, identifier, 'invalid_password');
+                return res.json({
+                    sukces: false,
+                    messageKey: 'api.auth.login.invalid_credentials',
+                    wiadomosc: LOGIN_FAIL_MESSAGE
+                });
+            }
+
+            clearFailedAttempts(ip, identifierKey);
+            const token = jwt.sign({ login: user.login, id: user.id }, SECRET_KEY, { expiresIn: '7d' });
+            return res.json({ sukces: true, login: user.login, token: token, dom_id: user.dom_id });
+        })
+        .catch(() => res.status(500).json({ sukces: false, wiadomosc: 'Błąd serwera' }));
 });
 
 router.post('/rejestracja', async (req, res) => {
-    const { login, haslo, email } = req.body;
+    const login = normalizeLogin(req.body ? req.body.login : undefined);
+    const haslo = req.body ? req.body.haslo : '';
+    const email = normalizeEmail(req.body ? req.body.email : undefined);
     const lang = normalizeLang(req.body ? req.body.lang : undefined);
-    if (!login || !haslo || !email) return res.json({ sukces: false, wiadomosc: 'Wypełnij pola' });
+    if (!login || typeof haslo !== 'string' || !haslo || !email) return res.json({ sukces: false, wiadomosc: 'Wypełnij pola' });
+    if (!looksLikeEmail(email)) return res.json({ sukces: false, wiadomosc: 'Podaj poprawny adres e-mail' });
+    if (looksLikeEmail(login)) {
+        return res.json({
+            sukces: false,
+            messageKey: 'api.auth.register.login_cannot_be_email',
+            wiadomosc: 'Login nie może mieć formatu adresu e-mail'
+        });
+    }
 
     try {
+        const existing = await dbGet(
+            "SELECT id FROM uzytkownicy WHERE login = ? OR lower(email) = lower(?) LIMIT 1",
+            [login, email]
+        );
+        if (existing) return res.json({ sukces: false, wiadomosc: 'Login/Email zajęty' });
+
         const hash = await bcrypt.hash(haslo, 10);
         const token = crypto.randomBytes(32).toString('hex');
         
@@ -133,11 +327,18 @@ router.get('/weryfikacja/:token', (req, res) => {
 
 // --- 1. PROŚBA O RESET (Wysyłka maila) ---
 router.post('/zapomnialem-haslo', (req, res) => {
-    const { email } = req.body;
+    const email = normalizeEmail(req.body ? req.body.email : undefined);
     const lang = normalizeLang(req.body ? req.body.lang : undefined);
+    if (!email || !looksLikeEmail(email)) {
+        return res.json({
+            sukces: true,
+            messageKey: 'api.auth.reset.request_sent_if_exists',
+            wiadomosc: 'Jeśli konto istnieje, wysłaliśmy link resetujący.'
+        });
+    }
     
     // Sprawdzamy czy user istnieje
-    db.get("SELECT id FROM uzytkownicy WHERE email = ?", [email], (err, user) => {
+    db.get("SELECT id FROM uzytkownicy WHERE lower(email) = lower(?)", [email], (err, user) => {
         if (!user) {
             // Ze względów bezpieczeństwa nie mówimy wprost "nie ma takiego maila", 
             // żeby hackerzy nie skanowali bazy. Mówimy "Jeśli konto istnieje, wysłaliśmy maila".

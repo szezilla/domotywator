@@ -43,6 +43,13 @@
       "database_error": "Database error."
     },
     "auth": {
+      "login": {
+        "invalid_credentials": "Invalid username/e-mail or password.",
+        "rate_limited": "Too many login attempts. Please try again later."
+      },
+      "register": {
+        "login_cannot_be_email": "Username cannot be in e-mail format."
+      },
       "reset": {
         "request_sent_if_exists": "If the account exists, we have sent a reset link.",
         "request_sent": "Reset link has been sent to your e-mail.",

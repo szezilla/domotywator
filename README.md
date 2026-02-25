@@ -1,17 +1,11 @@
 # DOMotywator - Dokumentacja Techniczna
 
-**Wersja:** `1.0.0`  
-**Data aktualizacji:** 13.02.2026
+**Wersja:** `1.0.2`  
+**Data aktualizacji:** 25.02.2026
 
 ## 1. Opis projektu
 DOMotywator to aplikacja webowa (SPA) do grywalizacji obowiązków domowych.  
 Użytkownicy tworzą domy, dodają zadania punktowane, zdobywają punkty i rywalizują w rankingu.
-
-
-### Wesprzyj projekt / Support the project ☕
-
-[![Wspieraj lokalnie](https://img.shields.io/badge/Postaw_kawę-buycoffee.to-yellow?style=for-the-badge)](https://buycoffee.to/szezilla)
-[![Support globally](https://img.shields.io/badge/Buy_Me_A_Coffee-Donate-orange?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/szezilla)
 
 ## 2. Stos technologiczny
 **Backend**
@@ -80,6 +74,10 @@ Główne tabele:
 
 ## 5. Najważniejsze funkcjonalności
 - Rejestracja, logowanie, aktywacja konta e-mailem
+- Logowanie przez `identifier` (login lub e-mail) z kompatybilnością dla starego pola `login`
+- Walidacja rejestracji: login nie może mieć formatu e-mail
+- Normalizacja danych logowania/rejestracji (trim, e-mail lowercase)
+- Ochrona logowania: rate limiting (per IP i per identifier) + audyt nieudanych prób
 - Reset hasła (token jednorazowy)
 - Tworzenie domu / dołączanie po kodzie i linku zaproszenia
 - Role właściciela i domownika
@@ -97,6 +95,9 @@ Główne tabele:
 ## 6. API (skrót)
 ### Auth (`/api/auth`)
 - `POST /login`
+  - `identifier` (zalecane) albo `login` (kompatybilność wsteczna)
+  - `haslo`
+  - priorytet wyszukiwania: jeśli `identifier` wygląda jak e-mail, backend szuka po e-mailu (case-insensitive), w przeciwnym razie po loginie
 - `POST /rejestracja`
 - `GET /weryfikacja/:token`
 - `POST /zapomnialem-haslo`
@@ -134,6 +135,7 @@ Główne tabele:
 - Przełączanie tekstów przez `data-i18n` i `data-i18n-placeholder`
 - Część widoków statycznych (`privacy.html`, `terms.html`, `license.html`) przełącza język na podstawie `?lang` i `localStorage`
 
+
 ## 8. Instalacja i uruchomienie
 ### Wymagania
 - Node.js 18+
@@ -153,7 +155,16 @@ MAIL_PORT=465
 MAIL_USER=twoj@email.pl
 MAIL_PASS=twoje_haslo
 MAIL_SECURE=true
+LOGIN_RATE_LIMIT_WINDOW_MS=900000
+LOGIN_RATE_LIMIT_BLOCK_MS=900000
+LOGIN_RATE_LIMIT_MAX_ATTEMPTS=10
 ```
+
+Znaczenie limitów logowania:
+- `LOGIN_RATE_LIMIT_WINDOW_MS`: okno czasowe zliczania prób
+- `LOGIN_RATE_LIMIT_BLOCK_MS`: czas blokady po przekroczeniu limitu
+- `LOGIN_RATE_LIMIT_MAX_ATTEMPTS`: maksymalna liczba błędnych prób w oknie
+- Domyślnie: 10 prób w 15 minut, blokada 15 minut
 
 ### Start
 ```bash
@@ -177,4 +188,3 @@ npm run typecheck
   - `privacy.html`
   - `terms.html`
   - `license.html`
-

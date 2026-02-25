@@ -80,9 +80,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }       else {
                 // --- TUTAJ JEST FIX ---
                 // Jeśli logowanie się nie uda, wyświetlamy komunikat
+                const loginErrorText = resolveApiMessage(res, tr('api.auth.login.invalid_credentials', 'Błędny login/email lub hasło'));
                 msgDiv.innerHTML = `<div class="alert-red">
                                         <span style="margin-right: 8px;"></span>
-                                        <span>${res.wiadomosc}</span>
+                                        <span>${loginErrorText}</span>
                                     </div>`;
                 setTimeout(() => { msgDiv.innerHTML = ''; }, 2500);
                 

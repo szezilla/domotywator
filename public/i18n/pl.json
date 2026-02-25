@@ -43,6 +43,13 @@
       "database_error": "Błąd bazy danych."
     },
     "auth": {
+      "login": {
+        "invalid_credentials": "Błędny login/email lub hasło.",
+        "rate_limited": "Zbyt wiele prób logowania. Spróbuj ponownie później."
+      },
+      "register": {
+        "login_cannot_be_email": "Login nie może mieć formatu adresu e-mail."
+      },
       "reset": {
         "request_sent_if_exists": "Jeśli konto istnieje, wysłaliśmy link resetujący.",
         "request_sent": "Wysłano link resetujący na e-mail.",
